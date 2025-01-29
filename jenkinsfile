@@ -1,0 +1,48 @@
+pipeline {
+    agent any
+
+    tools {
+        terraform 'terraform'  
+    }
+
+    stages {
+        stage('Clone the Repo') {
+            steps {
+                // Clone the Git repository
+                git url: 'https://github.com/ElamparithiMarimuthu/terraform-demo-new.git', branch: 'master'
+            }
+        }
+
+        stage('Terraform Init') {
+            steps {
+                // Use AWS credentials to initialize Terraform
+                withAWS(credentials: 'aws-cred', region:'ap-south-1' ) {
+                    sh 'terraform init'
+                }
+            }
+        }
+
+        stage('Create a resource on aws') {
+            steps {
+                withAWS(credentials: 'aws-cred', region:'ap-south-1' ) {
+                    sh 'terraform apply -auto-approve'
+                }
+            }
+        }
+        
+        stage('remove a resource on aws') {
+            steps {
+                withAWS(credentials: 'aws-cred', region:'ap-south-1' ) {
+                    sh 'terraform destroy -auto-approve'
+                }
+            }
+        }
+    }
+    
+
+    post {
+        always {
+            echo 'Pipeline execution finished.'
+        }
+    }
+}
